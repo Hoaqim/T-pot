@@ -3,7 +3,11 @@
 *.pem
 *.key
 creds.json
+Pulumi.dev*
 
 # Go
 bin/
 go.sum
+
+# tpot
+honeypot_keys/

@@ -5,7 +5,7 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func CreateNetwork(ctx *pulumi.Context) (*core.Subnet, error) {
+func CreateNetwork(ctx *pulumi.Context, compartmentId string) (*core.Subnet, error) {
 
 	type HoneyPort struct {
 		Port        int
@@ -26,6 +26,7 @@ func CreateNetwork(ctx *pulumi.Context) (*core.Subnet, error) {
 	}
 
 	vcn, err := core.NewVcn(ctx, "honeypot-vcn", &core.VcnArgs{
+		CompartmentId: pulumi.String(compartmentId),
 		CidrBlocks: pulumi.StringArray{
 			pulumi.String("10.0.0.0/16"),
 		},
@@ -35,14 +36,16 @@ func CreateNetwork(ctx *pulumi.Context) (*core.Subnet, error) {
 	}
 
 	igw, err := core.NewInternetGateway(ctx, "honeypot-igw", &core.InternetGatewayArgs{
-		VcnId: vcn.ID(),
+		CompartmentId: pulumi.String(compartmentId),
+		VcnId:         vcn.ID(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	rt, err := core.NewRouteTable(ctx, "honeypot-rt", &core.RouteTableArgs{
-		VcnId: vcn.ID(),
+		CompartmentId: pulumi.String(compartmentId),
+		VcnId:         vcn.ID(),
 		RouteRules: core.RouteTableRouteRuleArray{
 			&core.RouteTableRouteRuleArgs{
 				Destination:     pulumi.String("0.0.0.0/0"),
@@ -81,6 +84,7 @@ func CreateNetwork(ctx *pulumi.Context) (*core.Subnet, error) {
 	}
 
 	sl, err := core.NewSecurityList(ctx, "honeypot-firewall", &core.SecurityListArgs{
+		CompartmentId:        pulumi.String(compartmentId),
 		DisplayName:          pulumi.String("honeypot-security-list"),
 		VcnId:                vcn.ID(),
 		IngressSecurityRules: ingressRules,
@@ -96,15 +100,16 @@ func CreateNetwork(ctx *pulumi.Context) (*core.Subnet, error) {
 	}
 
 	subnet, err := core.NewSubnet(ctx, "honeypot-subnet", &core.SubnetArgs{
-		VcnId:              vcn.ID(),
-		CidrBlock:          pulumi.String("10.0.1.0/24"),
-		RouteTableId:       rt.ID(),
-		SecurityListIds:    pulumi.StringArray{sl.ID()},
-		AvailabilityDomain: pulumi.String("GqIF:EU-FRANKFURT-1-AD-1"),
+		CompartmentId:   pulumi.String(compartmentId),
+		VcnId:           vcn.ID(),
+		CidrBlock:       pulumi.String("10.0.1.0/24"),
+		RouteTableId:    rt.ID(),
+		SecurityListIds: pulumi.StringArray{sl.ID()},
+		DisplayName:     pulumi.String("honeypot-subnet"),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return subnet, err
+	return subnet, nil
 }
