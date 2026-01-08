@@ -1,0 +1,9 @@
+# Pulumi
+.pulumi/
+*.pem
+*.key
+creds.json
+
+# Go
+bin/
+go.sum
